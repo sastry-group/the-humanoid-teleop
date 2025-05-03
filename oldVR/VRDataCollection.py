@@ -6,7 +6,6 @@ class ChangeOfBasis:
     """
     Class where we explicitly find matricies of desired joints and change 
     the basis to be in the correct frame.
-    
     """
     def __init__(self):
         #self.tv = JointTracking(cert_file="../cert.pem", key_file="../key.pem", use_ngrok=False)
@@ -52,10 +51,3 @@ class ChangeOfBasis:
         rel_right_fingers = (hand_to_Inspire.T @ rel_right_fingers)[0:3, :].T
 
         return head_mat, rel_right_wrist_mat, rel_right_wrist_mat, rel_left_fingers, rel_right_fingers
-
-
-
-
-
-
-

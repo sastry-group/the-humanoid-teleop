@@ -54,7 +54,8 @@ class HumanoidIK:
         Process VR tracking data and compute robot joint angles
         Args:
             head_pos: np.array([x, y, z]) - head position
-            left_wrist_pos: np.array([x, y, z]) - left wrist position
+            left_wrist_pos: np.array([x, y,    ASPECT_RATIO_THRESHOLD = 2.0 # If the aspect ratio exceeds this value, it is considered binocular
+ z]) - left wrist position
             right_wrist_pos: np.array([x, y, z]) - right wrist position
             left_fingers: finger state for left hand
             right_fingers: finger state for right hand

@@ -5,7 +5,7 @@ import numpy as np
 import time
 from vuer import Vuer
 from vuer.events import ClientEvent
-from vuer.schemas import ImageBackground, Hands, DefaultScene
+from vuer.schemas import Hands, DefaultScene, CameraView
 # from preprocessing.processing import VuerPreprocessor
 from multiprocessing import Array, Value, Process, shared_memory
 
@@ -22,7 +22,7 @@ class TeleVision:
         self.app = Vuer(host="0.0.0.0", queries=dict(grid=False), queue_len=3)
 
         # Register our HAND_MOVE and CAM_MOVE handlers
-        self.app.add_handler("CAM_MOVE")(self.on_cam_move)
+        self.app.add_handler("CAMERA_MOVE")(self.on_cam_move)
         self.app.add_handler("HAND_MOVE")(self.on_hand_move)
 
         # Spawn our very simple scene (hand skeleton overlay)
@@ -38,10 +38,10 @@ class TeleVision:
         # self.vuer_preprocessor = VuerPreprocessor()
 
         # Initalize shared memory arrays for hand and head transforms
-        self.left_hand_shared = Array('d', 16, lock=True)
-        self.right_hand_shared = Array('d', 16, lock=True)
-        self.left_landmarks_shared = Array('d', 75, lock=True)
-        self.right_landmarks_shared = Array('d', 75, lock=True)
+        self.left_wrist_shared = Array('d', 16, lock=True)
+        self.right_wrist_shared = Array('d', 16, lock=True)
+        self.left_landmarks_shared = Array('d', 384, lock=True)
+        self.right_landmarks_shared = Array('d', 384, lock=True)
         self.head_matrix_shared = Array('d', 16, lock=True)
         self.aspect_shared = Value('d', 1.0, lock=True)
 
@@ -53,19 +53,14 @@ class TeleVision:
         Handler for HAND_MOVE events. Updates the shared memory arrays with:
         - leftWrist  (16 floats → 4x4 homogenous transformation matrix)
         - rightWrist  (16 floats → 4x4 homogenous transformation matrix)
-        - leftLandmarks  (75 floats → 25x3 landmarks x/y/z array)
-        - rightLandmarks  (75 floats → 25x3 landmarks x/y/z array)
+        - leftLandmarks  (384 floats → 24x16 landmarks)
+        - rightLandmarks  (384 floats → 24x16 landmarks)
         """
         try:
-            # print("HAND_MOVE event value:", event.value)
-            # Update left hand transform
-            self.left_hand_shared[:] = np.array(event.value["left"]).flatten(order="F")
-            # Update right hand transform
-            self.right_hand_shared[:] = np.array(event.value["right"]).flatten(order="F")
-            # Update left hand landmarks
-            self.left_landmarks_shared[:] = np.array(event.value["leftLandmarks"]).flatten()
-            # Update right hand landmarks
-            self.right_landmarks_shared[:] = np.array(event.value["rightLandmarks"]).flatten()
+            self.left_wrist_shared = np.array(event.value["left"])[0:16].flatten(order="F")
+            self.right_wrist_shared = np.array(event.value["right"])[0:16].flatten(order="F")
+            self.left_landmarks_shared = np.array(event.value["left"])[16:400].flatten(order="F")
+            self.right_landmarks_shared = np.array(event.value["right"])[16:400].flatten(order="F")
         except Exception as e:
             print("Error in HAND_MOVE handler:", e)
 
@@ -128,6 +123,7 @@ class TeleVision:
         """
         session.set @ DefaultScene(frameloop="always")
         session.upsert @ Hands(fps=fps, stream=True)
+        session.upsert @ CameraView(fps=fps, stream=True)
         while True:
             await asyncio.sleep(1)
 
@@ -142,8 +138,8 @@ class TeleVision:
         """
         Prints the current hand and head poses.
         """
-        print("Left Wrist:\n", self.left_hand)
-        print("Right Wrist:\n", self.right_hand)
+        print("Left Wrist:\n", self.left_wrist)
+        print("Right Wrist:\n", self.right_wrist)
         print("Left Landmarks:\n", self.left_landmarks)
         print("Right Landmarks:\n", self.right_landmarks)
         print("Head Matrix:\n", self.head_mat)
@@ -151,24 +147,24 @@ class TeleVision:
         print("―" * 60)
 
     @property
-    def left_hand(self): # Left hand 4x4 homogenous transformation matrix
-        return np.array(self.left_hand_shared[:]).reshape(4, 4, order="F")
+    def left_wrist(self): # Left hand 4x4 homogenous transformation matrix
+        return np.array(self.left_wrist_shared[:]).reshape(4, 4, order="F")
     
     @property
-    def right_hand(self): # Right hand 4x4 homogenous transformation matrix
-        return np.array(self.right_hand_shared[:]).reshape(4, 4, order="F")
+    def right_wrist(self): # Right hand 4x4 homogenous transformation matrix
+        return np.array(self.right_wrist_shared[:]).reshape(4, 4, order="F")
     
     @property
     def head_mat(self): # Head 4x4 homogenous transformation matrix
         return np.array(self.head_matrix_shared[:]).reshape(4, 4, order="F")
     
     @property
-    def left_landmarks(self): # Left hand 25x3 landmarks with x/y/z coordinates
-        return np.array(self.left_landmarks_shared[:]).reshape(25, 3)
+    def left_landmarks(self): # Left hand 24x16 landmarks
+        return np.array(self.left_landmarks_shared[:]).reshape(24, 16)
     
     @property
-    def right_landmarks(self): # Right hand 25x3 landmarks with x/y/z coordinates
-        return np.array(self.right_landmarks_shared[:]).reshape(25, 3)
+    def right_landmarks(self): # Right hand 24x16 landmarks
+        return np.array(self.right_landmarks_shared[:]).reshape(24, 16)
     
     @property
     def aspect(self): # Aspect ratio of the camera
@@ -177,11 +173,12 @@ class TeleVision:
 if __name__ == "__main__":
     import os 
     import sys
+    import threading
+    from image_server.image_client import ImageClient
+
     current_dir = os.path.dirname(os.path.abspath(__file__))
     parent_dir = os.path.dirname(current_dir)
     sys.path.append(parent_dir)
-    import threading
-    from image_server.image_client import ImageClient
 
     # # image
     # img_shape = (480, 640 * 2, 3)
@@ -195,8 +192,3 @@ if __name__ == "__main__":
     # tv = TeleVision(img_shape, img_shm.name)
     tv = TeleVision()
     tv.run()
-    print("vuer unit test program running...")
-    print("you can press ^C to interrupt program.")
-    while True:
-        time.sleep(1)
-        tv.printPoses()
