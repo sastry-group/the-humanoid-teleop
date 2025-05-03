@@ -6,7 +6,6 @@ import time
 from vuer import Vuer
 from vuer.events import ClientEvent
 from vuer.schemas import Hands, DefaultScene, CameraView
-# from preprocessing.processing import VuerPreprocessor
 from multiprocessing import Array, Value, Process, shared_memory
 
 class TeleVision:
@@ -26,16 +25,12 @@ class TeleVision:
         self.app.add_handler("HAND_MOVE")(self.on_hand_move)
 
         # Spawn our very simple scene (hand skeleton overlay)
-        # self.app.spawn(start=False)(self.main_image)
         self.app.spawn(start=False)(self.main_scene)
 
         # # Start the Vuer app in a separate process to avoid blocking in the main thread
         # self.process = Process(target=self.run)
         # self.process.daemon = True
         # self.process.start()
-
-        # Initialize the Vuer preprocessor
-        # self.vuer_preprocessor = VuerPreprocessor()
 
         # Initalize shared memory arrays for hand and head transforms
         self.left_wrist_shared = Array('d', 16, lock=True)
@@ -44,9 +39,6 @@ class TeleVision:
         self.right_landmarks_shared = Array('d', 384, lock=True)
         self.head_matrix_shared = Array('d', 16, lock=True)
         self.aspect_shared = Value('d', 1.0, lock=True)
-
-    def process(self, tv):
-        return self.vuer_preprocessor.process(tv)
     
     async def on_hand_move(self, event: ClientEvent, session, fps=60):
         """
@@ -142,7 +134,7 @@ class TeleVision:
         print("Right Wrist:\n", self.right_wrist)
         print("Left Landmarks:\n", self.left_landmarks)
         print("Right Landmarks:\n", self.right_landmarks)
-        print("Head Matrix:\n", self.head_mat)
+        print("Head Matrix:\n", self.head_matrix)
         print("Aspect Ratio:", self.aspect)
         print("―" * 60)
 
@@ -155,7 +147,7 @@ class TeleVision:
         return np.array(self.right_wrist_shared[:]).reshape(4, 4, order="F")
     
     @property
-    def head_mat(self): # Head 4x4 homogenous transformation matrix
+    def head_matrix(self): # Head 4x4 homogenous transformation matrix
         return np.array(self.head_matrix_shared[:]).reshape(4, 4, order="F")
     
     @property
