@@ -19,6 +19,9 @@ class PreProcessing:
         left_wrist_vuer_mat, left_wrist_flag  = mat_update(const_left_wrist_vuer_mat, self.tv.left_wrist.copy())
         right_wrist_vuer_mat, right_wrist_flag = mat_update(const_right_wrist_vuer_mat, self.tv.right_wrist.copy())
 
+        print("left_wrist_vuer_mat: ", self.tv.left_wrist.copy())
+        print("right_wrist_vuer_mat: ", self.tv.right_wrist.copy())
+
         # Change basis convention: VuerMat ((basis) OpenXR Convention) to WristMat ((basis) Robot Convention)
         # p.s. WristMat = T_{robot}_{openxr} * VuerMat * T_{robot}_{openxr}^T
         # Reason for right multiply fast_mat_inv(T_robot_openxr):
@@ -89,3 +92,13 @@ class PreProcessing:
 
         return head_rmat, unitree_left_wrist, unitree_right_wrist, unitree_left_hand, unitree_right_hand
     
+if __name__ == "__main__":
+
+    tv_wrapper = PreProcessing()
+    while True:
+        tv_wrapper.process()
+
+        # print("Left Wrist:\n", tv_wrapper.process()[0])
+        # print("Right Wrist:\n", tv_wrapper.process()[1])
+        # print("Left Hand:\n", tv_wrapper.process()[2])
+        # print("Right Hand:\n", tv_wrapper.process()[3])

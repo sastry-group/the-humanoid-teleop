@@ -21,22 +21,22 @@ class TeleVision:
         self.app = Vuer(host="0.0.0.0", queries=dict(grid=False), queue_len=3)
 
         # Register our HAND_MOVE and CAM_MOVE handlers
-        self.app.add_handler("CAMERA_MOVE")(self.on_cam_move)
+        # self.app.add_handler("CAMERA_MOVE")(self.on_cam_move)
         self.app.add_handler("HAND_MOVE")(self.on_hand_move)
 
         # Spawn our very simple scene (hand skeleton overlay)
         self.app.spawn(start=False)(self.main_scene)
-
-        # # Start the Vuer app in a separate process to avoid blocking in the main thread
-        # self.process = Process(target=self.run)
-        # self.process.daemon = True
-        # self.process.start()
 
         # Initalize shared memory arrays for hand and head transforms
         self.left_landmarks_shared = Array('d', 400, lock=True)
         self.right_landmarks_shared = Array('d', 400, lock=True)
         self.head_matrix_shared = Array('d', 16, lock=True)
         self.aspect_shared = Value('d', 1.0, lock=True)
+
+        # Start the Vuer app in a separate process to avoid blocking in the main thread
+        self.process = Process(target=self.vuer_run)
+        self.process.daemon = True
+        self.process.start()
     
     async def on_hand_move(self, event: ClientEvent, session, fps=60):
         """
@@ -45,12 +45,21 @@ class TeleVision:
         - rightLandmarks  (400 floats → 25x16 landmarks, includes wrist index at 0)
         """
         try:
-            raw_left = np.array(event.value["left"], dtype=float)
-            raw_right = np.array(event.value["right"], dtype=float)
+            raw_left = np.array(event.value["left"]).flatten(order="F")
+            raw_right = np.array(event.value["right"]).flatten(order="F")
+            # print("Shared size: ", len(self.left_landmarks_shared))
+            # print("Input size: ", np.array(event.value["left"]).flatten(order="F").shape)
             self.left_landmarks_shared[:] = raw_left.tolist()
             self.right_landmarks_shared[:] = raw_right.tolist()
+            # print("Left: ", raw_left.shape)
+            # print("Right: ", raw_right.shape)
         except Exception as e:
             print("Error in HAND_MOVE handler:", e)
+            # print("Left: ", raw_left.shape)
+            # print("Right: ", raw_right.shape)
+        # print("Left: ", np.array(event.value["left"]).flatten(order="F"))
+        # print("Right: ", np.array(event.value["right"]).flatten(order="F"))
+        
 
     async def on_cam_move(self, event: ClientEvent, session):
         """
@@ -112,12 +121,12 @@ class TeleVision:
         """
         session.set @ DefaultScene(frameloop="always")
         session.upsert @ Hands(fps=fps, stream=True)
-        session.upsert @ CameraView(fps=fps, stream=True)
+        # session.upsert @ CameraView(fps=fps, stream=True)
         while True:
             await asyncio.sleep(1)
 
 
-    def run(self):
+    def vuer_run(self):
         """
         Starts the Vuer app and runs the event loop.
         """
@@ -149,13 +158,13 @@ class TeleVision:
     
     @property
     def left_landmarks(self):
-        matsL = np.array(self.left_landmarks_shared[:]).reshape(25, 16) # Left hand 24x16 landmarks
+        matsL = np.array(self.left_landmarks_shared[:]).reshape(25, 4, 4, order="F") # Left hand 24x16 landmarks
         landmarksL = np.stack([M[0:3, 3] for M in matsL], axis=0) # Extract the translation part of the matrix
         return landmarksL
     
     @property
     def right_landmarks(self):
-        matsR = np.array(self.right_landmarks_shared[:]).reshape(25, 16) # Right hand 24x16 landmarks
+        matsR = np.array(self.right_landmarks_shared[:]).reshape(25, 4, 4, order="F") # Right hand 24x16 landmarks
         landmarksR = np.stack([M[0:3, 3] for M in matsR], axis=0) # Extract the translation part of the matrix
         return landmarksR
     
@@ -184,4 +193,7 @@ if __name__ == "__main__":
     # television
     # tv = TeleVision(img_shape, img_shm.name)
     tv = TeleVision()
-    tv.run()
+    while True:
+        # tv.printPoses()
+        time.sleep(0.5)
+    
