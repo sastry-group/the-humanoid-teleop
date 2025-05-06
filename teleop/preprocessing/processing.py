@@ -53,29 +53,29 @@ class PreProcessing:
         #    y0 y1 y1 ··· y23 y24
         #    z0 z1 z2 ··· z23 z24
         #     1  1  1 ···   1   1
-        left_wrist_vuer_mat  = np.concatenate([self.tv.left_landmarks.copy().T, np.ones((1, self.tv.left_landmarks.shape[0]))])
-        right_wrist_vuer_mat = np.concatenate([self.tv.right_landmarks.copy().T, np.ones((1, self.tv.right_landmarks.shape[0]))])
+        left_hand_vuer_mat  = np.concatenate([self.tv.left_landmarks.copy().T, np.ones((1, self.tv.left_landmarks.shape[0]))])
+        right_hand_vuer_mat = np.concatenate([self.tv.right_landmarks.copy().T, np.ones((1, self.tv.right_landmarks.shape[0]))])
 
         # Change basis convention: from (basis) OpenXR Convention to (basis) Robot Convention
         # Just a change of basis for 3D points. No rotation, only translation. No need to right-multiply fast_mat_inv(T_robot_openxr).
-        left_wrist_mat  = T_robot_openxr @ left_wrist_vuer_mat
-        right_wrist_mat = T_robot_openxr @ right_wrist_vuer_mat
+        left_hand_mat  = T_robot_openxr @ left_hand_vuer_mat
+        right_hand_mat = T_robot_openxr @ right_hand_vuer_mat
 
         # Transfer from WORLD to WRIST coordinate. (this process under (basis) Robot Convention)
         # p.s.  HandMat_WristBased = WristMat_{wrold}_{wrist}^T * HandMat_{wrold}
         #       HandMat_WristBased = WristMat_{wrist}_{wrold}   * HandMat_{wrold}, that is HandMat_{wrist}
-        left_wrist_mat_wb  = fast_mat_inv(left_wrist_mat) @ left_wrist_mat
-        right_wrist_mat_wb = fast_mat_inv(right_wrist_mat) @ right_wrist_mat
+        left_hand_mat_wb  = fast_mat_inv(left_wrist_mat) @ left_hand_mat
+        right_hand_mat_wb = fast_mat_inv(right_wrist_mat) @ right_hand_mat
         # Change hand convention: HandMat ((Left Hand) XR/AppleVisionPro Convention) to UnitreeHandMat((Left Hand URDF) Unitree Convention)
-        # Reason for left multiply : T_to_unitree_hand @ left_wrist_mat_wb ==> (4,4) @ (4,25) ==> (4,25), (4,25)[0:3, :] ==> (3,25), (3,25).T ==> (25,3)           
+        # Reason for left multiply : T_to_unitree_hand @ left_hand_mat_wb ==> (4,4) @ (4,25) ==> (4,25), (4,25)[0:3, :] ==> (3,25), (3,25).T ==> (25,3)           
         # Now under (Left Hand URDF) Unitree Convention, mat shape like this:
         #    [x0, y0, z0]
         #    [x1, y1, z1]
         #    ···
         #    [x23,y23,z23] 
         #    [x24,y24,z24]               
-        unitree_left_wrist  = (T_to_unitree_hand @ left_wrist_mat_wb)[0:3, :].T
-        unitree_right_wrist = (T_to_unitree_hand @ right_wrist_mat_wb)[0:3, :].T
+        unitree_left_hand  = (T_to_unitree_hand @ left_hand_mat_wb)[0:3, :].T
+        unitree_right_hand = (T_to_unitree_hand @ right_hand_mat_wb)[0:3, :].T
 
         # --------------------------------offset-------------------------------------
 
@@ -87,5 +87,5 @@ class PreProcessing:
         unitree_left_wrist[2, 3] +=0.45
         unitree_right_wrist[2,3] +=0.45
 
-        return head_rmat, unitree_left_wrist, unitree_right_wrist, unitree_left_wrist, unitree_right_wrist
+        return head_rmat, unitree_left_wrist, unitree_right_wrist, unitree_left_hand, unitree_right_hand
     

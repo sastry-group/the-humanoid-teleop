@@ -33,26 +33,22 @@ class TeleVision:
         # self.process.start()
 
         # Initalize shared memory arrays for hand and head transforms
-        self.left_wrist_shared = Array('d', 16, lock=True)
-        self.right_wrist_shared = Array('d', 16, lock=True)
-        self.left_landmarks_shared = Array('d', 384, lock=True)
-        self.right_landmarks_shared = Array('d', 384, lock=True)
+        self.left_landmarks_shared = Array('d', 400, lock=True)
+        self.right_landmarks_shared = Array('d', 400, lock=True)
         self.head_matrix_shared = Array('d', 16, lock=True)
         self.aspect_shared = Value('d', 1.0, lock=True)
     
     async def on_hand_move(self, event: ClientEvent, session, fps=60):
         """
         Handler for HAND_MOVE events. Updates the shared memory arrays with:
-        - leftWrist  (16 floats → 4x4 homogenous transformation matrix)
-        - rightWrist  (16 floats → 4x4 homogenous transformation matrix)
-        - leftLandmarks  (384 floats → 24x16 landmarks)
-        - rightLandmarks  (384 floats → 24x16 landmarks)
+        - leftLandmarks  (400 floats → 25x16 landmarks, includes wrist index at 0)
+        - rightLandmarks  (400 floats → 25x16 landmarks, includes wrist index at 0)
         """
         try:
-            self.left_wrist_shared = np.array(event.value["left"])[0:16].flatten(order="F")
-            self.right_wrist_shared = np.array(event.value["right"])[0:16].flatten(order="F")
-            self.left_landmarks_shared = np.array(event.value["left"])[16:400].flatten(order="F")
-            self.right_landmarks_shared = np.array(event.value["right"])[16:400].flatten(order="F")
+            raw_left = np.array(event.value["left"], dtype=float)
+            raw_right = np.array(event.value["right"], dtype=float)
+            self.left_landmarks_shared[:] = raw_left.tolist()
+            self.right_landmarks_shared[:] = raw_right.tolist()
         except Exception as e:
             print("Error in HAND_MOVE handler:", e)
 
@@ -64,7 +60,8 @@ class TeleVision:
         """
         try:
             # Update head matrix
-            self.head_matrix_shared[:] = np.array(event.value["camera"]["matrix"]).flatten(order="F")
+            raw_matrix = np.array(event.value["camera"]["matrix"], dtype=float)
+            self.head_matrix_shared[:] = raw_matrix.tolist()
             # Update aspect ratio
             self.aspect_shared.value = event.value["camera"]["aspect"]
         except Exception as e:
@@ -139,24 +136,28 @@ class TeleVision:
         print("―" * 60)
 
     @property
-    def left_wrist(self): # Left hand 4x4 homogenous transformation matrix
-        return np.array(self.left_wrist_shared[:]).reshape(4, 4, order="F")
+    def left_wrist(self): # Left hand 4x4 homogenous transformation matrix of first joint
+        return np.array(self.left_landmarks_shared[:16]).reshape(4, 4, order="F")
     
     @property
-    def right_wrist(self): # Right hand 4x4 homogenous transformation matrix
-        return np.array(self.right_wrist_shared[:]).reshape(4, 4, order="F")
+    def right_wrist(self): # Right hand 4x4 homogenous transformation matrix of first joint
+        return np.array(self.right_landmarks_shared[:16]).reshape(4, 4, order="F")
     
     @property
     def head_matrix(self): # Head 4x4 homogenous transformation matrix
         return np.array(self.head_matrix_shared[:]).reshape(4, 4, order="F")
     
     @property
-    def left_landmarks(self): # Left hand 24x16 landmarks
-        return np.array(self.left_landmarks_shared[:]).reshape(24, 16)
+    def left_landmarks(self):
+        matsL = np.array(self.left_landmarks_shared[:]).reshape(25, 16) # Left hand 24x16 landmarks
+        landmarksL = np.stack([M[0:3, 3] for M in matsL], axis=0) # Extract the translation part of the matrix
+        return landmarksL
     
     @property
-    def right_landmarks(self): # Right hand 24x16 landmarks
-        return np.array(self.right_landmarks_shared[:]).reshape(24, 16)
+    def right_landmarks(self):
+        matsR = np.array(self.right_landmarks_shared[:]).reshape(25, 16) # Right hand 24x16 landmarks
+        landmarksR = np.stack([M[0:3, 3] for M in matsR], axis=0) # Extract the translation part of the matrix
+        return landmarksR
     
     @property
     def aspect(self): # Aspect ratio of the camera
