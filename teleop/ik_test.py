@@ -1,7 +1,7 @@
 import numpy as np
 import time
 import argparse
-import cv2
+# import cv2
 from multiprocessing import shared_memory, Array, Lock, Process
 import threading
 
@@ -12,7 +12,7 @@ parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
 
 from teleop.preprocessing.processing import PreProcessing
-# from teleop.robot_control.robot_arm import H1_ArmController
+from teleop.robot_control.robot_arm import H1_ArmController
 from teleop.robot_control.robot_arm_ik import H1_ArmIK
 # from teleop.robot_control.robot_hand_inspire import Inspire_Controller
 
@@ -22,7 +22,7 @@ if __name__ == '__main__':
     tv_wrapper = PreProcessing()
 
     # arm
-    # arm_ctrl = H1_ArmController()
+    arm_ctrl = H1_ArmController()
     arm_ik = H1_ArmIK()
 
     left_hand_array = Array('d', 75, lock = True)          # [input]
@@ -49,8 +49,10 @@ if __name__ == '__main__':
             # print("Right Hand:\n", right_hand_array.shape)
 
             # get current state data.
-            current_lr_arm_q  = np.zeros(8, dtype=float) #arm_ctrl.get_current_dual_arm_q()
-            current_lr_arm_dq = np.zeros(8, dtype=float) #arm_ctrl.get_current_dual_arm_dq()
+            # current_lr_arm_q  = np.zeros(8, dtype=float) 
+            # current_lr_arm_dq = np.zeros(8, dtype=float) 
+            current_lr_arm_q = arm_ctrl.get_current_dual_arm_q()
+            current_lr_arm_dq = arm_ctrl.get_current_dual_arm_dq()
 
             # solve ik using motor data and wrist pose, then use ik results to control arms.
             # time_ik_start = time.time()
