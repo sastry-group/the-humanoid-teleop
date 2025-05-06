@@ -39,7 +39,7 @@ if __name__ == '__main__':
 
         running = True
         while running:
-            start_time = time.time()
+            # start_time = time.time()
             head_rmat, left_wrist, right_wrist, left_hand, right_hand = tv_wrapper.process()
 
             # send hand skeleton data to hand_ctrl.control_process
@@ -49,16 +49,17 @@ if __name__ == '__main__':
             # print("Right Hand:\n", right_hand_array.shape)
 
             # get current state data.
-            current_lr_arm_q  = arm_ctrl.get_current_dual_arm_q()
-            current_lr_arm_dq = arm_ctrl.get_current_dual_arm_dq()
+            current_lr_arm_q  = np.zeros(8, dtype=float) #arm_ctrl.get_current_dual_arm_q()
+            current_lr_arm_dq = np.zeros(8, dtype=float) #arm_ctrl.get_current_dual_arm_dq()
 
             # solve ik using motor data and wrist pose, then use ik results to control arms.
-            time_ik_start = time.time()
+            # time_ik_start = time.time()
             sol_q, sol_tauff  = arm_ik.solve_ik(left_wrist, right_wrist, current_lr_arm_q, current_lr_arm_dq)
             # sol_q, sol_tauff  = arm_ik.solve_ik(left_wrist, right_wrist, None, None)
-            time_ik_end = time.time()
+            # time_ik_end = time.time()
             print("Solved State: ", sol_q)
-            # print("Solved Torque: ", sol_tauff)
+            print("Solved Torque: ", sol_tauff)
+            time.sleep(0.1)
             # arm_ctrl.ctrl_dual_arm(sol_q, sol_tauff)
 
     except KeyboardInterrupt:
