@@ -1,3 +1,0 @@
-[submodule "zed-sdk"]
-	path = zed-sdk
-	url = https://github.com/stereolabs/zed-sdk.git
