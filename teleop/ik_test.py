@@ -52,12 +52,12 @@ if __name__ == '__main__':
     arm_ik = H1_ArmIK()
     print("Arm IK Initialized")
     # Initialize the channel
-    custom = Custom()
-    print("Custom Object Initialized")
-    custom.Init()
-    print("Custom Initialized")
-    custom.Start()
-    print("Custom Started")
+    # custom = Custom()
+    # print("Custom Object Initialized")
+    # custom.Init()
+    # print("Custom Initialized")
+    # custom.Start()
+    # print("Custom Started")
 
     left_hand_array = Array('d', 75, lock = True)          # [input]
     right_hand_array = Array('d', 75, lock = True)         # [input]
@@ -67,9 +67,9 @@ if __name__ == '__main__':
     # hand_ctrl = Inspire_Controller(left_hand_array, right_hand_array, dual_hand_data_lock, dual_hand_state_array, dual_hand_action_array)
     
     try:
-        user_input = input("Please enter the start signal (enter 'r' to start the subsequent program):\n")
-        if user_input.lower() == 'r':
-            arm_ctrl.speed_gradual_max()
+        # user_input = input("Please enter the start signal (enter 'r' to start the subsequent program):\n")
+        # if user_input.lower() == 'r':
+        #     arm_ctrl.speed_gradual_max()
 
         running = True
         while running:
@@ -99,10 +99,10 @@ if __name__ == '__main__':
                 print("Solved Torque: ", sol_tauff)
         
                 time.sleep(0.1)
-                cmd_str = format_dual_arm(sol_q[4:])
-                for _ in range(10):
-                    custom.process_command(cmd_str)
-                # arm_ctrl.ctrl_dual_arm(sol_q, sol_tauff)
+                # cmd_str = format_dual_arm(sol_q[4:])
+                # for _ in range(10):
+                #     custom.process_command(cmd_str)
+                arm_ctrl.ctrl_dual_arm(sol_q, sol_tauff)
 
 
     except KeyboardInterrupt:

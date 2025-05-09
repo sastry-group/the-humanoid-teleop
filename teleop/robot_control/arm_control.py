@@ -159,6 +159,11 @@ class Custom:
         self.lowstate_subscriber = ChannelSubscriber("rt/lowstate", LowState_)
         self.lowstate_subscriber.Init(self.LowStateHandler, 10)
 
+        # initialize subscribe thread
+        self.subscribe_thread = threading.Thread(target=self._subscribe_motor_state)
+        self.subscribe_thread.daemon = True
+        self.subscribe_thread.start()
+
         self.msc = MotionSwitcherClient()
         self.msc.SetTimeout(5.0)
         self.msc.Init()
