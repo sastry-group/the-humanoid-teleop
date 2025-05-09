@@ -5,8 +5,9 @@ import numpy as np
 import time
 from vuer import Vuer
 from vuer.events import ClientEvent
-from vuer.schemas import Hands, DefaultScene, CameraView
+from vuer.schemas import Hands, DefaultScene, CameraView, WebRTCStereoVideoPlane, ImageBackground
 from multiprocessing import Array, Value, Process, shared_memory
+import cv2
 
 class TeleVision:
     def __init__(self):
@@ -25,7 +26,9 @@ class TeleVision:
         self.app.add_handler("HAND_MOVE")(self.on_hand_move)
 
         # Spawn our very simple scene (hand skeleton overlay)
-        self.app.spawn(start=False)(self.main_scene)
+        # self.app.spawn(start=False)(self.main_scene)
+        self.app.spawn(start=False)(self.main_image)
+
 
         self.left_hand_shared = Array('d', 16, lock=True)
         self.right_hand_shared = Array('d', 16, lock=True)
@@ -76,43 +79,43 @@ class TeleVision:
         except Exception as e:
             print("Error in CAM_MOVE handler:", e)
 
-    # async def main_image(self, session, fps=60):
-        # session.upsert @ Hands(fps=fps, stream=True, key="hands", showLeft=False, showRight=False)
-        # while True:
-        #     display_image = cv2.cvtColor(self.img_array, cv2.COLOR_BGR2RGB)
-        #     # aspect_ratio = self.img_width / self.img_height
-        #     session.upsert(
-        #         [
-        #             ImageBackground(
-        #                 display_image[:, :self.img_width],
-        #                 aspect=1.778,
-        #                 height=1,
-        #                 distanceToCamera=1,
-        #                 # The underlying rendering engine supported a layer binary bitmask for both objects and the camera. 
-        #                 # Below we set the two image planes, left and right, to layers=1 and layers=2. 
-        #                 # Note that these two masks are associated with left eye’s camera and the right eye’s camera.
-        #                 layers=1,
-        #                 format="jpeg",
-        #                 quality=50,
-        #                 key="background-left",
-        #                 interpolate=True,
-        #             ),
-        #             ImageBackground(
-        #                 display_image[:, self.img_width:],
-        #                 aspect=1.778,
-        #                 height=1,
-        #                 distanceToCamera=1,
-        #                 layers=2,
-        #                 format="jpeg",
-        #                 quality=50,
-        #                 key="background-right",
-        #                 interpolate=True,
-        #             ),
-        #         ],
-        #         to="bgChildren",
-        #     )
-        #     # 'jpeg' encoding should give you about 30fps with a 16ms wait in-between.
-        #     await asyncio.sleep(0.016 * 2)
+    async def main_image(self, session, fps=60):
+        session.upsert @ Hands(fps=fps, stream=True, key="hands", showLeft=False, showRight=False)
+        while True:
+            display_image = cv2.cvtColor(self.img_array, cv2.COLOR_BGR2RGB)
+            # aspect_ratio = self.img_width / self.img_height
+            session.upsert(
+                [
+                    ImageBackground(
+                        display_image[:, :self.img_width],
+                        aspect=1.778,
+                        height=1,
+                        distanceToCamera=1,
+                        # The underlying rendering engine supported a layer binary bitmask for both objects and the camera. 
+                        # Below we set the two image planes, left and right, to layers=1 and layers=2. 
+                        # Note that these two masks are associated with left eye’s camera and the right eye’s camera.
+                        layers=1,
+                        format="jpeg",
+                        quality=50,
+                        key="background-left",
+                        interpolate=True,
+                    ),
+                    ImageBackground(
+                        display_image[:, self.img_width:],
+                        aspect=1.778,
+                        height=1,
+                        distanceToCamera=1,
+                        layers=2,
+                        format="jpeg",
+                        quality=50,
+                        key="background-right",
+                        interpolate=True,
+                    ),
+                ],
+                to="bgChildren",
+            )
+            # 'jpeg' encoding should give you about 30fps with a 16ms wait in-between.
+            await asyncio.sleep(0.016 * 2)
 
     async def main_scene(self, session, fps=60):
         """
@@ -121,7 +124,13 @@ class TeleVision:
         """
         session.set @ DefaultScene(frameloop="always")
         session.upsert @ Hands(fps=fps, stream=True)
-        # session.upsert @ CameraView(fps=fps, stream=True)
+        session.upsert @ WebRTCStereoVideoPlane(
+            src="https://",
+            key="zed",
+            aspect=1.33334,
+            height = 8,
+            position=[0, -2, -0.2],
+        )
         while True:
             await asyncio.sleep(1)
 
