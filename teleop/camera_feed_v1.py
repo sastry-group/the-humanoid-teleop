@@ -3,10 +3,10 @@ import cv2
 import asyncio
 from vuer import Vuer
 from vuer.schemas import DefaultScene, Hands, ImageBackground
-import pyzed.sl as sl
+# import pyzed.sl as sl
 
 # Change this to your camera index (0, 1, …) or path to ZED’s video device
-CAMERA_IDX = 0  
+CAMERA_IDX = 0
 FPS = 30
 
 app = Vuer(host="0.0.0.0", port=8012, queries=dict(grid=False), queue_len=3)

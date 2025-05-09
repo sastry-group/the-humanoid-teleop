@@ -27,7 +27,8 @@ class TeleVision:
 
         # Spawn our very simple scene (hand skeleton overlay)
         # self.app.spawn(start=False)(self.main_scene)
-        self.app.spawn(start=False)(self.main_image)
+        self.app.spawn(start=True)(self.main_image)
+        # self.app.spawn(start=True)(self.main_camera)
 
 
         self.left_hand_shared = Array('d', 16, lock=True)
@@ -79,43 +80,115 @@ class TeleVision:
         except Exception as e:
             print("Error in CAM_MOVE handler:", e)
 
+    # async def main_camera(self, session):
+    #     fps = 30
+    #     CAMERA_IDX = 0
+    #     # 1) Basic Vuer scene
+    #     session.set @ DefaultScene(frameloop="always")
+    #     session.upsert @ Hands(fps=fps, stream=True)
+
+    #     # 2) OpenCV capture
+    #     cap = cv2.VideoCapture(CAMERA_IDX)
+    #     if not cap.isOpened():
+    #         raise RuntimeError(f"Cannot open camera {CAMERA_IDX}")
+
+    #     # 3) Stream loop
+    #     while True:
+    #         ret, frame_bgr = cap.read()
+    #         if not ret:
+    #             await asyncio.sleep(1.0 / fps)
+    #             continue
+
+    #         # Convert to RGB for Vuer
+    #         frame_rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
+
+    #         # Upload as background quad (mono for now)
+    #         session.upsert @ ImageBackground(
+    #             frame_rgb,
+    #             format="jpeg",
+    #             quality=80,
+    #             key="camera-feed",
+    #             interpolate=True,
+    #             aspect=frame_rgb.shape[1] / frame_rgb.shape[0],
+    #             distanceToCamera=2,
+    #             position=[0, 0, -3],
+    #             height=3
+    #         )
+
+    #         await asyncio.sleep(1.0 / fps)
+
+
     async def main_image(self, session, fps=60):
         session.upsert @ Hands(fps=fps, stream=True, key="hands", showLeft=False, showRight=False)
-        while True:
-            display_image = cv2.cvtColor(self.img_array, cv2.COLOR_BGR2RGB)
-            # aspect_ratio = self.img_width / self.img_height
-            session.upsert(
-                [
-                    ImageBackground(
-                        display_image[:, :self.img_width],
-                        aspect=1.778,
-                        height=1,
-                        distanceToCamera=1,
-                        # The underlying rendering engine supported a layer binary bitmask for both objects and the camera. 
-                        # Below we set the two image planes, left and right, to layers=1 and layers=2. 
-                        # Note that these two masks are associated with left eye’s camera and the right eye’s camera.
-                        layers=1,
-                        format="jpeg",
-                        quality=50,
-                        key="background-left",
-                        interpolate=True,
-                    ),
-                    ImageBackground(
-                        display_image[:, self.img_width:],
-                        aspect=1.778,
-                        height=1,
-                        distanceToCamera=1,
-                        layers=2,
-                        format="jpeg",
-                        quality=50,
-                        key="background-right",
-                        interpolate=True,
-                    ),
-                ],
-                to="bgChildren",
-            )
+        CAMERA_IDX = 0
+
+        # 1) Basic Vuer scene
+        session.set @ DefaultScene(frameloop="always")
+        # session.upsert @ Hands(fps=fps, stream=True)
+
+        # # 2) OpenCV capture
+        # cap = cv2.VideoCapture(CAMERA_IDX)
+        # if not cap.isOpened():
+        #     raise RuntimeError(f"Cannot open camera {CAMERA_IDX}")
+
+        # while True:
+        #     # display_image = cv2.cvtColor(self.img_array, cv2.COLOR_BGR2RGB)
+        #     # # aspect_ratio = self.img_width / self.img_height
+        #     # session.upsert(
+        #     #     [
+        #     #         ImageBackground(
+        #     #             display_image[:, :self.img_width],
+        #     #             aspect=1.778,
+        #     #             height=1,
+        #     #             distanceToCamera=1,
+        #     #             # The underlying rendering engine supported a layer binary bitmask for both objects and the camera. 
+        #     #             # Below we set the two image planes, left and right, to layers=1 and layers=2. 
+        #     #             # Note that these two masks are associated with left eye’s camera and the right eye’s camera.
+        #     #             layers=1,
+        #     #             format="jpeg",
+        #     #             quality=50,
+        #     #             key="background-left",
+        #     #             interpolate=True,
+        #     #         ),
+        #     #         ImageBackground(
+        #     #             display_image[:, self.img_width:],
+        #     #             aspect=1.778,
+        #     #             height=1,
+        #     #             distanceToCamera=1,
+        #     #             layers=2,
+        #     #             format="jpeg",
+        #     #             quality=50,
+        #     #             key="background-right",
+        #     #             interpolate=True,
+        #     #         ),
+        #     #     ],
+        #     #     to="bgChildren",
+        #     # )
+
+        #     ret, frame_bgr = cap.read()
+        #     if not ret:
+        #         await asyncio.sleep(1.0 / fps)
+        #         continue
+
+        #     # Convert to RGB for Vuer
+        #     frame_rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
+
+        #     # Upload as background quad (mono for now)
+        #     session.upsert @ ImageBackground(
+        #         frame_rgb,
+        #         format="jpeg",
+        #         quality=80,
+        #         key="camera-feed",
+        #         interpolate=True,
+        #         aspect=frame_rgb.shape[1] / frame_rgb.shape[0],
+        #         distanceToCamera=2,
+        #         position=[0, 0, -3],
+        #         height=3
+        #     )
+
+            # await asyncio.sleep(1.0 / fps)
             # 'jpeg' encoding should give you about 30fps with a 16ms wait in-between.
-            await asyncio.sleep(0.016 * 2)
+            # await asyncio.sleep(0.016 * 2)
 
     async def main_scene(self, session, fps=60):
         """
