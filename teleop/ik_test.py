@@ -53,6 +53,8 @@ if __name__ == '__main__':
             # current_lr_arm_dq = np.zeros(8, dtype=float) 
             current_lr_arm_q = arm_ctrl.get_current_dual_arm_q()
             current_lr_arm_dq = arm_ctrl.get_current_dual_arm_dq()
+            print("Current Arm Q: ", current_lr_arm_q)
+            print("Current Arm DQ: ", current_lr_arm_dq)    
 
             # solve ik using motor data and wrist pose, then use ik results to control arms.
             # time_ik_start = time.time()

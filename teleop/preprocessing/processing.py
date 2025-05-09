@@ -2,10 +2,24 @@ import numpy as np
 from TeleVision import TeleVision
 from .constants import *
 from utils.MatrixTools import mat_update, fast_mat_inv
+from multiprocessing import shared_memory, Queue, Event
 
 class PreProcessing:
     def __init__(self):
+        resolution = (720, 1280)
+        crop_size_w = 340  # (resolution[1] - resolution[0]) // 2
+        crop_size_h = 270
+        resolution_cropped = (resolution[0] - crop_size_h, resolution[1] - 2 * crop_size_w)  # 450 * 600
+        img_shape = (2 * resolution_cropped[0], resolution_cropped[1], 3)  # 900 * 600
+        shm = shared_memory.SharedMemory(create=True, size=np.prod(img_shape) * np.uint8().itemsize)
+
+        # television
+        cert_file = "cert.pem"
+        key_file = "key.pem"
+        image_queue = Queue()
+        toggle_streaming = Event()
         self.tv = TeleVision()
+        # self.tv = TeleVision(resolution_cropped, image_queue, toggle_streaming, cert_file=cert_file, key_file=key_file, stream_mode="webrtc")
         
     def process(self):
         """
@@ -19,8 +33,8 @@ class PreProcessing:
         left_wrist_vuer_mat, left_wrist_flag  = mat_update(const_left_wrist_vuer_mat, self.tv.left_wrist.copy())
         right_wrist_vuer_mat, right_wrist_flag = mat_update(const_right_wrist_vuer_mat, self.tv.right_wrist.copy())
 
-        print("left_wrist_vuer_mat: ", self.tv.left_wrist.copy())
-        print("right_wrist_vuer_mat: ", self.tv.right_wrist.copy())
+        # print("left_wrist_vuer_mat: ", self.tv.left_wrist.copy())
+        # print("right_wrist_vuer_mat: ", self.tv.right_wrist.copy())
 
         # Change basis convention: VuerMat ((basis) OpenXR Convention) to WristMat ((basis) Robot Convention)
         # p.s. WristMat = T_{robot}_{openxr} * VuerMat * T_{robot}_{openxr}^T
@@ -89,6 +103,9 @@ class PreProcessing:
         unitree_right_wrist[0,3] +=0.15
         unitree_left_wrist[2, 3] +=0.45
         unitree_right_wrist[2,3] +=0.45
+
+        print("unitree_left_wrist: ", unitree_left_wrist)
+        print("unitree_right_wrist: ", unitree_right_wrist)
 
         return head_rmat, unitree_left_wrist, unitree_right_wrist, unitree_left_hand, unitree_right_hand
     
