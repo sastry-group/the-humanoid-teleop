@@ -10,7 +10,7 @@ from aiohttp import web
 from aiortc import RTCPeerConnection, RTCSessionDescription
 from aiortc.contrib.media import MediaPlayer, MediaRelay
 from aiortc.rtcrtpsender import RTCRtpSender
-from multiprocessing import Process, Array, Value, shared_memory
+from multiprocessing import Process, Array, Value, shared_memory, Queue, Event
 
 ROOT = os.path.dirname(__file__)
 
@@ -162,21 +162,48 @@ class Args(ParamsProto):
 
     verbose = Flag()
 
-
 if __name__ == '__main__':
+    import time
+    from multiprocessing import Process, Queue, Value
 
+    # 1) create the shared queue + toggle flag
+    frame_queue = Queue(maxsize=10)
+    toggle_streaming = Event()
+
+    # 2) background producer: once toggle_streaming=True, emits dummy frames
+    def frame_producer(q, toggle, shape=(960,640,3), fps=60):
+        # wait until WebRTC track calls toggle.set()
+        while not toggle.is_set():
+            time.sleep(0.01)
+        H, W, C = shape
+        interval = 1.0 / fps
+        while True:
+            # simple ramp pattern – you can replace with any numpy array
+            frame = (np.ones((H, W, C), dtype=np.uint8) * 127)
+            try:
+                q.put(frame, timeout=1.0)
+            except:
+                pass
+            time.sleep(interval)
+
+    # start the producer
+    prod = Process(target=frame_producer, args=(frame_queue, toggle_streaming, (960,640,3), 60))
+    prod.daemon = True
+    prod.start()
+
+    # 3) now wire into your RTC server exactly as before
     if Args.verbose:
         logging.basicConfig(level=logging.DEBUG)
     else:
         logging.basicConfig(level=logging.INFO)
 
+    # SSL‑context logic unchanged...
+    ssl_context = None
     if Args.cert_file:
-        print("Using SSL certificate file: %s" % Args.cert_file)
         ssl_context = ssl.SSLContext()
         ssl_context.load_cert_chain(Args.cert_file, Args.key_file)
-    else:
-        ssl_context = None
 
+    # build app
     app = web.Application()
     cors = aiohttp_cors.setup(app, defaults={
         "*": aiohttp_cors.ResourceOptions(
@@ -186,10 +213,46 @@ if __name__ == '__main__':
             allow_methods="*",
         )
     })
-    rtc = RTC((960, 640), queue)
+
+    # pass in our test queue + toggle
+    rtc = RTC((960,640), frame_queue, toggle_streaming, fps=60)
+
     app.on_shutdown.append(on_shutdown)
     cors.add(app.router.add_get("/", index))
     cors.add(app.router.add_get("/client.js", javascript))
     cors.add(app.router.add_post("/offer", rtc.offer))
 
+    # serve on 0.0.0.0:8080 (or override via --host/--port)
     web.run_app(app, host=Args.host, port=Args.port, ssl_context=ssl_context)
+
+# if __name__ == '__main__':
+
+#     if Args.verbose:
+#         logging.basicConfig(level=logging.DEBUG)
+#     else:
+#         logging.basicConfig(level=logging.INFO)
+
+#     if Args.cert_file:
+#         print("Using SSL certificate file: %s" % Args.cert_file)
+#         ssl_context = ssl.SSLContext()
+#         ssl_context.load_cert_chain(Args.cert_file, Args.key_file)
+#     else:
+#         ssl_context = None
+
+#     app = web.Application()
+#     cors = aiohttp_cors.setup(app, defaults={
+#         "*": aiohttp_cors.ResourceOptions(
+#             allow_credentials=True,
+#             expose_headers="*",
+#             allow_headers="*",
+#             allow_methods="*",
+#         )
+#     })
+#     queue = Queue()
+#     rtc = RTC((960, 640), queue)
+#     app.on_shutdown.append(on_shutdown)
+#     cors.add(app.router.add_get("/", index))
+#     cors.add(app.router.add_get("/client.js", javascript))
+#     cors.add(app.router.add_post("/offer", rtc.offer))
+
+#     web.run_app(app, host=Args.host, port=Args.port, ssl_context=ssl_context)
