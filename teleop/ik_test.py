@@ -46,6 +46,7 @@ if __name__ == '__main__':
     # television: obtain hand pose data from the XR device and transmit the robot's head camera image to the XR device.
     tv_wrapper = PreProcessing()
     print("Television Wrapper Initialized")
+    ChannelFactoryInitialize(0)
     # arm control
     arm_ctrl = H1_ArmController()
     print("Arm Controller Initialized")
