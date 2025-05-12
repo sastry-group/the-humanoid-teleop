@@ -94,6 +94,7 @@ if __name__ == '__main__':
 
 
     print("Television Wrapper Initialized")
+    ChannelFactoryInitialize(0)
     # arm control
     arm_ctrl = H1_ArmController()
     print("Arm Controller Initialized")

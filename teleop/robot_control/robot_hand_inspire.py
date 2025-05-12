@@ -23,9 +23,11 @@ class Inspire_Controller:
         self.Unit_Test = Unit_Test
         if not self.Unit_Test:
             self.hand_retargeting = HandRetargeting(HandType.INSPIRE_HAND)
+            # ChannelFactoryInitialize(0)
         else:
             self.hand_retargeting = HandRetargeting(HandType.INSPIRE_HAND_Unit_Test)
-            ChannelFactoryInitialize(0)
+        # ChannelFactoryInitialize(0)
+        # input("hey")
 
         # initialize handcmd publisher and handstate subscriber
         self.HandCmb_publisher = ChannelPublisher(kTopicInspireCommand, MotorCmds_)
