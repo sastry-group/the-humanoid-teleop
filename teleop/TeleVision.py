@@ -21,7 +21,7 @@ class TeleVision:
         self.app = Vuer(host="0.0.0.0", queries=dict(grid=False), queue_len=3)
 
         # Register our HAND_MOVE and CAM_MOVE handlers
-        self.app.add_handler("CAMERA_MOVE")(self.on_cam_move)
+        # self.app.add_handler("CAMERA_MOVE")(self.on_cam_move)
         self.app.add_handler("HAND_MOVE")(self.on_hand_move)
 
         # Spawn our very simple scene (hand skeleton overlay)
@@ -193,6 +193,7 @@ if __name__ == "__main__":
     while True:
         tv.printPoses()
         time.sleep(0.5)
+
     
 
 
