@@ -43,13 +43,14 @@ def format_dual_arm(joint_array):
 
 if __name__ == '__main__':
     input("Press Enter to start the program...")
+
     # television: obtain hand pose data from the XR device and transmit the robot's head camera image to the XR device.
     tv_wrapper = PreProcessing()
     print("Television Wrapper Initialized")
     # arm control
-    # arm_ctrl = H1_ArmController()
+    arm_ctrl = H1_ArmController()
     print("Arm Controller Initialized")
-    # arm_ik = H1_ArmIK()
+    arm_ik = H1_ArmIK()
     print("Arm IK Initialized")
     # Initialize the channel
     # custom = Custom()
@@ -82,27 +83,27 @@ if __name__ == '__main__':
 
             if np.linalg.norm(left_hand_array) > 0.1 and np.linalg.norm(right_hand_array) > 0.1:
 
-                # #get current state data.
-                # # current_lr_arm_q  = np.zeros(8, dtype=float) 
-                # # current_lr_arm_dq = np.zeros(8, dtype=float) 
-                # current_lr_arm_q = arm_ctrl.get_current_dual_arm_q()
-                # current_lr_arm_dq = arm_ctrl.get_current_dual_arm_dq()
-                # print("Current Arm Q: ", current_lr_arm_q)
-                # print("Current Arm DQ: ", current_lr_arm_dq)    
+                #get current state data.
+                # current_lr_arm_q  = np.zeros(8, dtype=float) 
+                # current_lr_arm_dq = np.zeros(8, dtype=float) 
+                current_lr_arm_q = arm_ctrl.get_current_dual_arm_q()
+                current_lr_arm_dq = arm_ctrl.get_current_dual_arm_dq()
+                print("Current Arm Q: ", current_lr_arm_q)
+                print("Current Arm DQ: ", current_lr_arm_dq)    
 
-                # # solve ik using motor data and wrist pose, then use ik results to control arms.
-                # # time_ik_start = time.time()
-                # sol_q, sol_tauff  = arm_ik.solve_ik(left_wrist, right_wrist, current_lr_arm_q, current_lr_arm_dq)
-                # # sol_q, sol_tauff  = arm_ik.solve_ik(left_wrist, right_wrist, None, None)
-                # # time_ik_end = time.time()
-                # print("Solved State: ", sol_q)
-                # print("Solved Torque: ", sol_tauff)
+                # solve ik using motor data and wrist pose, then use ik results to control arms.
+                # time_ik_start = time.time()
+                sol_q, sol_tauff  = arm_ik.solve_ik(left_wrist, right_wrist, current_lr_arm_q, current_lr_arm_dq)
+                # sol_q, sol_tauff  = arm_ik.solve_ik(left_wrist, right_wrist, None, None)
+                # time_ik_end = time.time()
+                print("Solved State: ", sol_q)
+                print("Solved Torque: ", sol_tauff)
         
                 time.sleep(0.1)
                 # cmd_str = format_dual_arm(sol_q[4:])
                 # for _ in range(10):
                 #     custom.process_command(cmd_str)
-                # arm_ctrl.ctrl_dual_arm(sol_q, sol_tauff)
+                arm_ctrl.ctrl_dual_arm(sol_q, sol_tauff)
 
 
     except KeyboardInterrupt:
