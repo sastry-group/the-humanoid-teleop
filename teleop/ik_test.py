@@ -64,7 +64,7 @@ if __name__ == '__main__':
     dual_hand_data_lock = Lock()
     dual_hand_state_array = Array('d', 12, lock = False)   # [output] current left, right hand state(12) data.
     dual_hand_action_array = Array('d', 12, lock = False)  # [output] current left, right hand action(12) data.
-    # hand_ctrl = Inspire_Controller(left_hand_array, right_hand_array, dual_hand_data_lock, dual_hand_state_array, dual_hand_action_array)
+    hand_ctrl = Inspire_Controller(left_hand_array, right_hand_array, dual_hand_data_lock, dual_hand_state_array, dual_hand_action_array)
     
     try:
         # user_input = input("Please enter the start signal (enter 'r' to start the subsequent program):\n")
