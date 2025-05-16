@@ -58,6 +58,8 @@ class TeleVision:
             self.right_hand_shared[:] = event.value["rightHand"]
             self.left_landmarks_shared[:] = np.array(event.value["leftLandmarks"]).flatten()
             self.right_landmarks_shared[:] = np.array(event.value["rightLandmarks"]).flatten()
+            # print("Left Poses: ", np.array(event.value["leftLandmarks"]))
+            # print("Right Poses: ", np.array(event.value["rightLandmarks"]))
         except Exception as e:
             print("Error in HAND_MOVE handler:", e)
         # print("Left: ", np.array(event.value["left"]).flatten(order="F"))
