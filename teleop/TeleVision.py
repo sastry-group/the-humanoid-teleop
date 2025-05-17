@@ -22,7 +22,7 @@ class TeleVision:
         self.app = Vuer(host="0.0.0.0", queries=dict(grid=False), queue_len=3)
 
         # Register our HAND_MOVE and CAM_MOVE handlers
-        self.app.add_handler("CAMERA_MOVE")(self.on_cam_move)
+        # self.app.add_handler("CAMERA_MOVE")(self.on_cam_move)
         self.app.add_handler("HAND_MOVE")(self.on_hand_move)
 
         # Spawn our very simple scene (hand skeleton overlay)
@@ -62,6 +62,8 @@ class TeleVision:
             self.right_hand_shared[:] = event.value["rightHand"]
             self.left_landmarks_shared[:] = np.array(event.value["leftLandmarks"]).flatten()
             self.right_landmarks_shared[:] = np.array(event.value["rightLandmarks"]).flatten()
+            # print("Left Poses: ", np.array(event.value["leftLandmarks"]))
+            # print("Right Poses: ", np.array(event.value["rightLandmarks"]))
         except Exception as e:
             print("Error in HAND_MOVE handler:", e)
         # print("Left: ", np.array(event.value["left"]).flatten(order="F"))
@@ -275,6 +277,7 @@ if __name__ == "__main__":
     while True:
         tv.printPoses()
         time.sleep(0.5)
+
     
 
 

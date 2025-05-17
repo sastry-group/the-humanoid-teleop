@@ -140,8 +140,8 @@ class Custom:
         self.control_dt_ = 0.01  
         self.duration_ = 60.0    
         self.counter_ = 0
-        self.kp_low_ = 30.0
-        self.kp_high_ = 100.0
+        self.kp_low_ = 20.0
+        self.kp_high_ = 70.0
         self.kd_low_ = 1.5
         self.kd_high_ = 5.0
         self.low_cmd = unitree_go_msg_dds__LowCmd_()  

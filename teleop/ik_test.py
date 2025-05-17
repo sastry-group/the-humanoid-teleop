@@ -87,7 +87,8 @@ def format_dual_arm(joint_array):
 #         await asyncio.sleep(1.0 / fps)
 
 if __name__ == '__main__':
-    input("Press Enter tap to start the program...")
+    input("Press Enter to start the program...")
+
 
     # television: obtain hand pose data from the XR device and transmit the robot's head camera image to the XR device.
     tv_wrapper = PreProcessing()

@@ -47,10 +47,10 @@ class H1_ArmController:
         self.q_target = np.zeros(8)
         self.tauff_target = np.zeros(8)
 
-        self.kp_high = 300.0
+        self.kp_high = 280.0
         self.kd_high = 5.0
-        self.kp_low = 140.0
-        self.kd_low = 3.0
+        self.kp_low = 80.0
+        self.kd_low = 1.5
 
         self.all_motor_q = None
         self.arm_velocity_limit = 20.0

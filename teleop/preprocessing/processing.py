@@ -61,7 +61,7 @@ class PreProcessing:
         unitree_left_wrist[0:3, 3]  = unitree_left_wrist[0:3, 3] - head_mat[0:3, 3]
         unitree_right_wrist[0:3, 3] = unitree_right_wrist[0:3, 3] - head_mat[0:3, 3]
 
-        # --------------------------------hand-------------------------------------
+        # --------------------------------hand------------ch-------------------------
 
         # Homogeneous, [xyz] to [xyz1]
         # p.s. np.concatenate([25,3]^T,(1,25)) ==> hand_vuer_mat.shape is (4,25)
@@ -104,8 +104,8 @@ class PreProcessing:
         unitree_left_wrist[2, 3] +=0.45
         unitree_right_wrist[2,3] +=0.45
 
-        print("unitree_left_wrist: ", unitree_left_wrist)
-        print("unitree_right_wrist: ", unitree_right_wrist)
+        # print("unitree_left_wrist: ", unitree_left_wrist)
+        # print("unitree_right_wrist: ", unitree_right_wrist)
 
         return head_rmat, unitree_left_wrist, unitree_right_wrist, unitree_left_hand, unitree_right_hand
     
